@@ -6,12 +6,23 @@ function getGitContributions() {
         // Get all authors' names and emails from the git log
         const authorsLog = execSync('git log --pretty=format:"%an <%ae>"').toString();
         const authors = [...new Set(authorsLog.split('\n'))]; // Get unique name and email pairs
+        const emailMap = new Map();
 
+        authors.forEach(author => {
+            const match = author.match(/(.+?)\s*<([^>]+)>/);
+            if(match) {
+                const [_, authorName, authorEmail] = match;
+                if(!emailMap.has(authorEmail)) {
+                    emailMap.set(authorEmail, `${authorName.trim()} <${authorEmail}>`);
+                }
+            }
+        });
+        const uniqueAuthors = Array.from(emailMap.values());
         const contributions = {};
         let totalNetContributions = 0;
         let totalCommits = 0;
 
-        authors.forEach(authorInfo => {
+        uniqueAuthors.forEach(authorInfo => {
             if (authorInfo.trim() === '') return;
 
             const [authorName, authorEmail] = authorInfo.split(' <');
