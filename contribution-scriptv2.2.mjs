@@ -6,18 +6,8 @@ function getGitContributions() {
         // Get all authors' names and emails from the git log
         const authorsLog = execSync('git log --pretty=format:"%an <%ae>"').toString();
         const authors = [...new Set(authorsLog.split('\n'))]; // Get unique name and email pairs
-        const emailMap = new Map();
 
-        authors.forEach(author => {
-            const match = author.match(/(.+?)\s*<([^>]+)>/);
-            if(match) {
-                const [_, authorName, authorEmail] = match;
-                if(!emailMap.has(authorEmail)) {
-                    emailMap.set(authorEmail, `${authorName.trim()} <${authorEmail}>`);
-                }
-            }
-        });
-        const uniqueAuthors = Array.from(emailMap.values());
+        const uniqueAuthors = getUniqueAuthors(authors);
         const contributions = {};
         let totalNetContributions = 0;
         let totalCommits = 0;
@@ -59,13 +49,28 @@ function getGitContributions() {
     }
 }
 
+function getUniqueAuthors(authors) {
+    const emailMap = new Map();
+
+    authors.forEach(author => {
+        const match = author.match(/(.+?)\s*<([^>]+)>/);
+        if (match) {
+            const [_, authorName, authorEmail] = match;
+            if (!emailMap.has(authorEmail)) {
+                emailMap.set(authorEmail, `${authorName.trim()} <${authorEmail}>`);
+            }
+        }
+    });
+    return Array.from(emailMap.values());
+}
+
 function calculateAdditionsAndDeletions(authorStats) {
     let additions = 0;
     let deletions = 0;
 
     authorStats.split('\n').forEach(line => {
         if (line.includes('node_modules') || line.includes('package-lock.json') ||
-           line.includes('devcontainer')) return;
+            line.includes('devcontainer')) return;
 
         const parts = line.split('\t');
         if (parts.length >= 2) {
